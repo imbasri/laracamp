@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\User\AfterRegister;
 
 class UserController extends Controller
 {
@@ -33,13 +35,16 @@ class UserController extends Controller
             'avatar' => $callback->getAvatar(),
             'email_verified_at' => now(),
         ];
+        // check if user already registered
+        $user = User::whereEmail($data['email'])->first();
+        // check if jika tidak ada di database
+        if (!$user) {
+            $user = User::create($data);
+            // send email after register
+            Mail::to($user->email)->send(new AfterRegister($user));
+        }
 
-        $user = User::updateOrCreate(
-            ['email' => $callback->getEmail()],
-            $data
-        );
         Auth::login($user, true);
         return redirect()->route('welcome');
-
     }
 }
