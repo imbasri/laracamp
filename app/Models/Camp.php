@@ -11,4 +11,12 @@ class Camp extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = ['title', 'price'];
 
+    public function getIsRegisteredAttribute()
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        // check if the user is registered for the camp
+        return Checkout::whereCampId($this->id)->whereUserId(auth()->user()->id)->exists();
+    }
 }
