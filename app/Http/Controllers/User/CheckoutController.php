@@ -8,6 +8,8 @@ use App\Models\Camp;
 use App\Models\Checkout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Checkout\AfterCheckout;
 
 class CheckoutController extends Controller
 {
@@ -45,7 +47,6 @@ class CheckoutController extends Controller
      */
     public function store(Store $request, Camp $camp)
     {
-        return $request;
         // mapping request data
         $data = $request->all();
         $data['user_id'] = Auth::id();
@@ -57,10 +58,17 @@ class CheckoutController extends Controller
         $user->name = $data['name'];
         $user->occupation = $data['occupation'];
         $user->save();
-        // create checkout
 
+        // create checkout
         $checkout = Checkout::create($data);
-        return $checkout ? redirect()->route('checkout.success') : redirect()->back()->with('error', 'Checkout failed');
+
+        // send email to user
+        Mail::to($user->email)->send(new AfterCheckout($checkout));
+
+        // redirect to success page or back with error
+        return $checkout
+            ? redirect()->route('checkout.success')->with('message', 'Checkout successful')
+            : redirect()->back()->with('error', 'Checkout failed');
     }
 
     /**
@@ -113,5 +121,10 @@ class CheckoutController extends Controller
         return view('checkout.success', [
             'message' => 'Checkout successful',
         ]);
+    }
+
+    public function invoice(Checkout $checkout)
+    {
+        return $checkout;
     }
 }
