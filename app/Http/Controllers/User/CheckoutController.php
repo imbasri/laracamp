@@ -29,10 +29,10 @@ class CheckoutController extends Controller
     {
 
         // check if the user is registered for the camp
-        // if ($camp->isRegistered) {
-        //     $request->session()->flash('error', 'You are already registered for this camp');
-        //     return redirect()->route('user.dashboard');
-        // }
+        if ($camp->isRegistered) {
+            $request->session()->flash('error', 'You are already registered for this camp');
+            return redirect()->route('user.dashboard');
+        }
 
         return view('checkout.create', [
             'camp' => $camp,
