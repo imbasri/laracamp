@@ -51,39 +51,30 @@
                                 <div class="mb-4">
                                     <label for="occupation" class="form-label">Occupation</label>
                                     <input name="occupation" type="text" class="form-control" id="occupation"
-                                        aria-describedby="occupationHelp" value="{{ old('occupation') ?: Auth::user()->occupation }}" required>
+                                        aria-describedby="occupationHelp"
+                                        value="{{ old('occupation') ?: Auth::user()->occupation }}" required>
                                     @if ($errors->has('occupation'))
                                         <div class="text-danger mt-2">{{ $errors->first('occupation') }}</div>
                                     @endif
                                 </div>
+
                                 <div class="mb-4">
-                                    <label for="cardNumber" class="form-label">Card Number</label>
-                                    <input name="card_number" type="text" class="form-control" id="cardNumber"
-                                        aria-describedby="cardNumberHelp" value="{{ old('card_number') ?: Auth::user()->card_number }}" required>
-                                    @if ($errors->has('card_number'))
-                                        <div class="text-danger mt-2">{{ $errors->first('card_number') }}</div>
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input name="phone" type="text" class="form-control" id="phone"
+                                        aria-describedby="phoneHelp" value="{{ old('phone') ?: Auth::user()->phone }}"
+                                        required>
+                                    @if ($errors->has('phone'))
+                                        <div class="text-danger mt-2">{{ $errors->first('phone') }}</div>
                                     @endif
                                 </div>
-                                <div class="mb-5">
-                                    <div class="row">
-                                        <div class="col-lg-6 col-12">
-                                            <label for="expirationDate" class="form-label">Expiration Date (YYYY-MM)</label>
-                                            <input name="expired" type="text" class="form-control" id="expirationDate"
-                                                placeholder="YYYY-MM" pattern="\d{4}-(0?[1-9]|1[0-2])" required value="{{ old('expired') ?: Auth::user()->expired }}">
-                                            @if ($errors->has('expired'))
-                                                <div class="text-danger mt-2">{{ $errors->first('expired') }}</div>
-                                            @endif
-                                        </div>
-                                        <div class="col-lg-6 col-12">
-                                            <label for="cvc" class="form-label">CVC</label>
-                                            <input name="cvc" type="number" class="form-control" id="cvc"
-                                                maxlength="3"
-                                                oninput="if(this.value.length > 3) this.value = this.value.slice(0, 3);" value="{{ old('cvc') ?: Auth::user()->cvc }}" required>
-                                            @if ($errors->has('cvc'))
-                                                <div class="text-danger mt-2">{{ $errors->first('cvc') }}</div>
-                                            @endif
-                                        </div>
-                                    </div>
+                                <div class="mb-4">
+                                    <label for="address" class="form-label">Address</label>
+                                    <input name="address" type="text" class="form-control" id="address"
+                                        aria-describedby="addressHelp"
+                                        value="{{ old('address') ?: Auth::user()->address }}" required>
+                                    @if ($errors->has('address'))
+                                        <div class="text-danger mt-2">{{ $errors->first('address') }}</div>
+                                    @endif
                                 </div>
                                 <button type="submit" class="w-100 btn btn-primary">Pay Now</button>
                                 <p class="text-center subheader mt-4">
