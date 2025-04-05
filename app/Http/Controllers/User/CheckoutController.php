@@ -203,4 +203,44 @@ class CheckoutController extends Controller
             return false;
         }
     }
+
+    public function midtransCallback(Request $request)
+    {
+        $notif = new \Midtrans\Notification();
+        $transactionStatus = $notif->transaction_status;
+        $fraudStatus = $notif->fraud_status;
+        $checkout_id = explode('-', $notif->order_id)[0];
+        $checkout = Checkout::find($checkout_id);
+        if ($checkout) {
+            if ($transactionStatus == 'capture') {
+                if ($fraudStatus == 'challenge') {
+                    // TODO set payment status in database to 'challenge'
+                    $checkout->payment_status = 'pending';
+                } else {
+                    // TODO set payment status in database to 'success'
+                    $checkout->payment_status = 'paid';
+                }
+            } elseif ($transactionStatus == 'settlement') {
+                // TODO set payment status in database to 'settlement'
+                $checkout->payment_status = 'paid';
+            } elseif ($transactionStatus == 'pending') {
+                // TODO set payment status in database to 'pending'
+                $checkout->payment_status = 'pending';
+            } elseif ($transactionStatus == 'deny') {
+                $checkout->payment_status = 'failed';
+                // TODO set payment status in database to 'deny'
+            } elseif ($transactionStatus == 'expire') {
+                // TODO set payment status in database to 'expire'
+                $checkout->payment_status = 'failed';
+            } elseif ($transactionStatus == 'cancel') {
+                // TODO set payment status in database to 'cancel'
+                $checkout->payment_status = 'failed';
+            }
+        }
+        // TODO update checkout status
+        $checkout->save();
+
+        // TODO redirect to success page
+        return redirect()->route('checkout.success')->with('message', 'Checkout successful');
+    }
 }
