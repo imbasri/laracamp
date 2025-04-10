@@ -1,0 +1,16 @@
+services:
+  - name: laracamp-app
+    ports:
+      - port: 80
+        http: {}
+    env:
+      - name: APP_ENV
+        value: production
+      - name: APP_DEBUG
+        value: "false"
+    docker:
+      image: koyeb/app
+    http:
+      routes:
+        - path: /
+          port: 80
