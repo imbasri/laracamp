@@ -30,7 +30,13 @@
                                             {{ $checkout->camp->title }}
                                         </td>
                                         <td>
-                                            Rp.{{ $checkout->camp->price }}
+                                            {{-- jadi ini dikondisikan karna semisalnya sudah di production dan diskon baru dibuat, karna total itu dari create transaksi dan sebelumnya total jadi nullabel karna belum ada diskon maka kondisi ini jadi yang dipakai --}}
+                                            <strong>Rp.{{ number_format($checkout->total ?: $checkout->camp->price, 2) }}
+                                                @if ($checkout->discount_percentage)
+                                                    <span class="badge bg-success text-center">
+                                                        disc {{ $checkout->discount_percentage }}%</span>
+                                                @endif
+                                            </strong>
                                         </td>
                                         <td>
                                             {{ $checkout->created_at->format('d-m-Y') }}
