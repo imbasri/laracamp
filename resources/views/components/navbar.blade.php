@@ -42,6 +42,11 @@
                                 @endif
                             </li>
                             <li>
+                                @if (Auth::user()->is_admin)
+                                <a href="{{ route('admin.discount.index') }}" class="dropdown-item">Discount</a>
+                                @endif
+                            </li>
+                            <li>
                                 <a href="#" class="dropdown-item"
                                     onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Sign
                                     out</a>
@@ -63,7 +68,6 @@
                     </a>
                 </div>
             @endauth
-
         </div>
     </div>
 </nav>
