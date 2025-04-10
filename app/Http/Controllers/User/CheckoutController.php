@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\User\Checkout\Store;
 use App\Mail\Checkout\AfterCheckout;
 use App\Models\Camp;
+use App\Models\Discount;
 use Auth;
 use Mail;
 use Str;
@@ -71,6 +72,13 @@ class CheckoutController extends Controller
         $user->phone = $data['phone'];
         $user->address = $data['address'];
         $user->save();
+
+        // checkout discount code
+        if ($request->discount) {
+            $discount = Discount::where('code', $request->discount)->first();
+            $data['discount_id'] = $discount->id;
+            $data['discount_percentage'] = $discount->percentage;
+        }
 
         // create checkout
         $checkout = Checkout::create($data);
@@ -137,21 +145,29 @@ class CheckoutController extends Controller
      */
     public function getSnapRedirect(Checkout $checkout)
     {
-        $orderId = $checkout->id.'-'.Str::random(5);
+        $orderId = $checkout->id . '-' . Str::random(5);
         $price = $checkout->Camp->price;
-
         $checkout->midtrans_booking_code = $orderId;
-
-        $transaction_details = [
-            'order_id' => $orderId,
-            'gross_amount' => $price
-        ];
-
         $item_details[] = [
             'id' => $orderId,
             'price' => $price,
             'quantity' => 1,
             'name' => "Payment for {$checkout->Camp->title} Camp"
+        ];
+        $discountPrice = 0;
+        if ($checkout->Discount) {
+            $discountPrice = $price * $checkout->discount_percentage / 100;
+            $item_details[] = [
+                'id' => $checkout->Discount->code,
+                'price' => -$discountPrice,
+                'quantity' => 1,
+                'name' => "Discount {$checkout->Discount->name} {{$checkout->Discount->percentage}}%"
+            ];
+        }
+        $total = $price - $discountPrice;
+        $transaction_details = [
+            'order_id' => $orderId,
+            'gross_amount' => $total
         ];
 
         $userData = [
@@ -183,6 +199,7 @@ class CheckoutController extends Controller
             // Get Snap Payment Page URL
             $paymentUrl = \Midtrans\Snap::createTransaction($midtrans_params)->redirect_url;
             $checkout->midtrans_url = $paymentUrl;
+            $checkout->total = $total;
             $checkout->save();
 
             return $paymentUrl;
@@ -193,52 +210,46 @@ class CheckoutController extends Controller
 
     public function midtransCallback(Request $request)
     {
-        $notif = $request->method() == 'POST' ? new Midtrans\Notification() : Midtrans\Transaction::status($request->order_id);
+        try {
+            $notif = $request->method() == 'POST' ? new Midtrans\Notification() : Midtrans\Transaction::status($request->order_id);
 
-        $transaction_status = $notif->transaction_status;
-        $fraud = $notif->fraud_status;
+            if (!isset($notif->order_id)) {
+                return abort(400, 'Invalid order ID');
+            }
 
-        $checkout_id = explode('-', $notif->order_id)[0];
-        $checkout = Checkout::find($checkout_id);
+            $checkout_id = explode('-', $notif->order_id)[0];
+            $checkout = Checkout::find($checkout_id);
 
-        if ($transaction_status == 'capture') {
-            if ($fraud == 'challenge') {
-                // TODO Set payment status in merchant's database to 'challenge'
-                $checkout->payment_status = 'pending';
+            if (!$checkout) {
+                return response()->json(['error' => 'Checkout not found'], 404);
             }
-            else if ($fraud == 'accept') {
-                // TODO Set payment status in merchant's database to 'success'
-                $checkout->payment_status = 'paid';
-            }
-        }
-        else if ($transaction_status == 'cancel') {
-            if ($fraud == 'challenge') {
-                // TODO Set payment status in merchant's database to 'failure'
-                $checkout->payment_status = 'failed';
-            }
-            else if ($fraud == 'accept') {
-                // TODO Set payment status in merchant's database to 'failure'
-                $checkout->payment_status = 'failed';
-            }
-        }
-        else if ($transaction_status == 'deny') {
-            // TODO Set payment status in merchant's database to 'failure'
-            $checkout->payment_status = 'failed';
-        }
-        else if ($transaction_status == 'settlement') {
-            // TODO set payment status in merchant's database to 'Settlement'
-            $checkout->payment_status = 'paid';
-        }
-        else if ($transaction_status == 'pending') {
-            // TODO set payment status in merchant's database to 'Pending'
-            $checkout->payment_status = 'pending';
-        }
-        else if ($transaction_status == 'expire') {
-            // TODO set payment status in merchant's database to 'expire'
-            $checkout->payment_status = 'failed';
-        }
 
-        $checkout->save();
-        return view('checkout/success');
+            $transaction_status = $notif->transaction_status;
+            $fraud = $notif->fraud_status;
+
+            switch ($transaction_status) {
+                case 'capture':
+                    $checkout->payment_status = ($fraud == 'challenge') ? 'pending' : 'paid';
+                    break;
+                case 'cancel':
+                case 'deny':
+                case 'expire':
+                    $checkout->payment_status = 'failed';
+                    break;
+                case 'settlement':
+                    $checkout->payment_status = 'paid';
+                    break;
+                case 'pending':
+                    $checkout->payment_status = 'pending';
+                    break;
+                default:
+                    return abort(404, 'Invalid transaction status');
+            }
+
+            $checkout->save();
+            return view('checkout.success');
+        } catch (\Exception $e) {
+            return abort(500, 'Internal Server Error');
+        }
     }
 }

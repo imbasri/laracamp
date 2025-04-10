@@ -76,6 +76,16 @@
                                         <div class="text-danger mt-2">{{ $errors->first('address') }}</div>
                                     @endif
                                 </div>
+
+                                <div class="mb-4">
+                                    <label for="discount" class="form-label">Discount Code</label>
+                                    <input name="discount" type="text" class="form-control" id="discount"
+                                        aria-describedby="phoneHelp" value="{{ old('discount') }}" >
+                                    @if ($errors->has('discount'))
+                                        <div class="text-danger mt-2">{{ $errors->first('discount') }}</div>
+                                    @endif
+                                </div>
+
                                 <button type="submit" class="w-100 btn btn-primary">Pay Now</button>
                                 <p class="text-center subheader mt-4">
                                     <img src="{{ asset('images/ic_secure.svg') }}" alt=""> Your payment is secure
