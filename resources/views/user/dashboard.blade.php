@@ -43,19 +43,25 @@
                                     <strong>Rp.{{ number_format($checkout->camp->price, 2) }}</strong>
                                 </td>
                                 <td>
-                                    <strong class="{{ $checkout->is_paid ? 'text-success' : '' }}">
-                                        {{ $checkout->is_paid ? 'Payment Success' : 'Waiting for Payment' }}
-                                    </strong>
+                                    <strong> {{ $checkout->payment_status }}</strong>
                                 </td>
                                 <td>
-                                    <a href="https://wa.me/085000000?text=Hi,saya ingin bertanya tentang class {{ $checkout->camp->title }} dengan saya {{ Auth::user()->name }}" class="btn btn-primary" target="_blank">
+                                    @if ($checkout->payment_status == 'waiting')
+                                        <a href="{{ $checkout->midtrans_url }}" class="btn btn-primary">
+                                            Pay here
+                                        </a>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a href="https://wa.me/085000000?text=Hi,saya ingin bertanya tentang class {{ $checkout->camp->title }} dengan saya {{ Auth::user()->name }}"
+                                        class="btn btn-primary" target="_blank">
                                         Contact Admin
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center">No checkouts available.</td>
+                                <td colspan="5" class="text-center">No Camp checkouts available.</td>
                             </tr>
                         @endforelse
                     </tbody>

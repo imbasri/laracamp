@@ -28,9 +28,8 @@ class Store extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . Auth::id() . ',id',
             'occupation' => 'required|string|max:255',
-            'card_number' => 'required|string|max:16',
-            'expired' => 'required|date|date_format:Y-m|after_or_equal:date(' . now()->format('Y-m') . ')',
-            'cvc' => 'required|numeric|digits:3',
+            'phone' => 'required|string|max:15',
+            'address' => 'required|string|max:255',
         ];
     }
 }
