@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\User\Checkout\Store;
 use App\Mail\Checkout\AfterCheckout;
 use App\Models\Camp;
+use App\Models\Discount;
 use Auth;
 use Mail;
 use Str;
@@ -71,6 +72,13 @@ class CheckoutController extends Controller
         $user->phone = $data['phone'];
         $user->address = $data['address'];
         $user->save();
+
+        // checkout discount code
+        if ($request->discount) {
+            $discount = Discount::where('code', $request->discount)->first();
+            $data['discount_id'] = $discount->id;
+            $data['discount_percentage'] = $discount->percentage;
+        }
 
         // create checkout
         $checkout = Checkout::create($data);
@@ -137,21 +145,29 @@ class CheckoutController extends Controller
      */
     public function getSnapRedirect(Checkout $checkout)
     {
-        $orderId = $checkout->id.'-'.Str::random(5);
+        $orderId = $checkout->id . '-' . Str::random(5);
         $price = $checkout->Camp->price;
-
         $checkout->midtrans_booking_code = $orderId;
-
-        $transaction_details = [
-            'order_id' => $orderId,
-            'gross_amount' => $price
-        ];
-
         $item_details[] = [
             'id' => $orderId,
             'price' => $price,
             'quantity' => 1,
             'name' => "Payment for {$checkout->Camp->title} Camp"
+        ];
+        $discountPrice = 0;
+        if ($checkout->Discount) {
+            $discountPrice = $price * $checkout->discount_percentage / 100;
+            $item_details[] = [
+                'id' => $checkout->Discount->code,
+                'price' => -$discountPrice,
+                'quantity' => 1,
+                'name' => "Discount {$checkout->Discount->name} {{$checkout->Discount->percentage}}%"
+            ];
+        }
+        $total = $price - $discountPrice;
+        $transaction_details = [
+            'order_id' => $orderId,
+            'gross_amount' => $total
         ];
 
         $userData = [
@@ -183,6 +199,7 @@ class CheckoutController extends Controller
             // Get Snap Payment Page URL
             $paymentUrl = \Midtrans\Snap::createTransaction($midtrans_params)->redirect_url;
             $checkout->midtrans_url = $paymentUrl;
+            $checkout->total = $total;
             $checkout->save();
 
             return $paymentUrl;
@@ -205,35 +222,28 @@ class CheckoutController extends Controller
             if ($fraud == 'challenge') {
                 // TODO Set payment status in merchant's database to 'challenge'
                 $checkout->payment_status = 'pending';
-            }
-            else if ($fraud == 'accept') {
+            } else if ($fraud == 'accept') {
                 // TODO Set payment status in merchant's database to 'success'
                 $checkout->payment_status = 'paid';
             }
-        }
-        else if ($transaction_status == 'cancel') {
+        } else if ($transaction_status == 'cancel') {
             if ($fraud == 'challenge') {
                 // TODO Set payment status in merchant's database to 'failure'
                 $checkout->payment_status = 'failed';
-            }
-            else if ($fraud == 'accept') {
+            } else if ($fraud == 'accept') {
                 // TODO Set payment status in merchant's database to 'failure'
                 $checkout->payment_status = 'failed';
             }
-        }
-        else if ($transaction_status == 'deny') {
+        } else if ($transaction_status == 'deny') {
             // TODO Set payment status in merchant's database to 'failure'
             $checkout->payment_status = 'failed';
-        }
-        else if ($transaction_status == 'settlement') {
+        } else if ($transaction_status == 'settlement') {
             // TODO set payment status in merchant's database to 'Settlement'
             $checkout->payment_status = 'paid';
-        }
-        else if ($transaction_status == 'pending') {
+        } else if ($transaction_status == 'pending') {
             // TODO set payment status in merchant's database to 'Pending'
             $checkout->payment_status = 'pending';
-        }
-        else if ($transaction_status == 'expire') {
+        } else if ($transaction_status == 'expire') {
             // TODO set payment status in merchant's database to 'expire'
             $checkout->payment_status = 'failed';
         }

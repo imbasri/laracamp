@@ -15,7 +15,7 @@
             </div>
             <div class="row my-5">
                 @include('components.alert')
-                <table class="table *:table-striped table-hover">
+                <table class="table *:table-striped table-hover" align="center">
                     <thead>
                         <tr>
                             <th scope="col"></th>
@@ -23,6 +23,7 @@
                             <th scope="col">Price</th>
                             <th scope="col">Status</th>
                             <th scope="col">Action</th>
+                            <th scope="col" class="text-center">Support</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,7 +53,7 @@
                                         </a>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <a href="https://wa.me/085000000?text=Hi,saya ingin bertanya tentang class {{ $checkout->camp->title }} dengan saya {{ Auth::user()->name }}"
                                         class="btn btn-primary" target="_blank">
                                         Contact Admin
@@ -61,7 +62,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center">No Camp checkouts available.</td>
+                                <td colspan="6" class="text-center">No Camp checkouts available.</td>
                             </tr>
                         @endforelse
                     </tbody>
