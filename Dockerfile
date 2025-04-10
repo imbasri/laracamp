@@ -33,10 +33,7 @@ RUN echo "<VirtualHost *:80>\n\
     ErrorLog \${APACHE_LOG_DIR}/error.log\n\
     CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
     </VirtualHost>" > /etc/apache2/sites-available/000-default.conf
-# Generate key jika tidak ada
-RUN if [ -z "$(grep '^APP_KEY=base64:' .env)" ]; then \
-    php artisan key:generate --force; \
-    fi
+
 RUN a2enmod rewrite
 RUN chown -R www-data:www-data /var/www/html/storage
 RUN chmod -R 775 storage bootstrap/cache
