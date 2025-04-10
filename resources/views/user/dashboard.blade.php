@@ -41,7 +41,13 @@
                                     </p>
                                 </td>
                                 <td>
-                                    <strong>Rp.{{ number_format($checkout->camp->price, 2) }}</strong>
+                                    {{-- jadi ini dikondisikan karna semisalnya sudah di production dan diskon baru dibuat, karna total itu dari create transaksi dan sebelumnya total jadi nullabel karna belum ada diskon maka kondisi ini jadi yang dipakai --}}
+                                    <strong>Rp.{{ number_format($checkout->total ?: $checkout->camp->price, 2) }}
+                                        @if ($checkout->discount_percentage)
+                                            <span class="badge bg-success text-center">
+                                                disc {{ $checkout->discount_percentage }}%</span>
+                                        @endif
+                                    </strong>
                                 </td>
                                 <td>
                                     <strong> {{ $checkout->payment_status }}</strong>
@@ -53,7 +59,7 @@
                                         </a>
                                     @endif
                                 </td>
-                                <td class="text-center">
+                                <td class="">
                                     <a href="https://wa.me/085000000?text=Hi,saya ingin bertanya tentang class {{ $checkout->camp->title }} dengan saya {{ Auth::user()->name }}"
                                         class="btn btn-primary" target="_blank">
                                         Contact Admin
