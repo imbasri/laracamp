@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\User\AfterRegister;
 
 class UserController extends Controller
@@ -28,7 +29,11 @@ class UserController extends Controller
 
     public function handleProviderCallback()
     {
-        $callback = Socialite::driver('google')->user();
+        try {
+            $callback = Socialite::driver('google')->user();
+        } catch (\Exception $e) {
+            return redirect()->route('google.login')->with('error', 'Failed to authenticate with Google.');
+        }
         $data = [
             'name' => $callback->getName(),
             'email' => $callback->getEmail(),
@@ -37,7 +42,12 @@ class UserController extends Controller
         ];
         // check if user already registered
         $user = User::whereEmail($data['email'])->first();
-        // check if jika tidak ada di database
+            try {
+                Mail::to($user->email)->send(new AfterRegister($user));
+            } catch (\Exception $e) {
+                // Log the error or handle it as needed
+                Log::error('Failed to send email: ' . $e->getMessage());
+            }
         if (!$user) {
             $user = User::create($data);
             // send email after register
